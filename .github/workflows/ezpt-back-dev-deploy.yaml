@@ -1,0 +1,48 @@
+name: Spring Deploy on dev
+
+on:
+  push:
+    branches: [ "dev" ]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Build
+        run: |
+          sudo chmod +x gradlew
+          ./gradlew build -x test
+
+      - name: Build docker image
+        run: docker build -t niceyoo0221/ezpt-back:latest .
+
+      - name: Push docker image
+        run: |
+          docker login -u ${{ secrets.BACK_DOCKER_USERNAME }} -p ${{ secrets.BACK_DOCKER_PASSWORD }}
+          docker push niceyoo0221/ezpt-back:latest
+
+      - name: Connect to Ncloud Server with SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.NCLOUD_HOST }}
+          username: ${{ secrets.NCLOUD_USERNAME }}
+          key: ${{ secrets.NCLOUD_KEY }}
+          password: ${{ secrets.NCLOUD_PASSWORD }}
+          script: |
+            docker pull niceyoo0221/ezpt-back:latest
+            docker stop ezpt-back
+            docker rm ezpt-back
+            docker run -d -p 80:8080 --name=ezpt-back niceyoo0221/ezpt-back:latest
