@@ -20,7 +20,7 @@ public class Prompt {
     private User user;
 
     @OneToMany(mappedBy = "prompt")
-    private List<Message> message = new ArrayList<>();
+    private List<Message> messages = new ArrayList<>();
 
     public int getId() {
         return id;
@@ -47,10 +47,10 @@ public class Prompt {
     }
 
     public List<Message> getMessage() {
-        return message;
+        return messages;
     }
 
     public void setMessage(List<Message> message) {
-        this.message = message;
+        this.messages = message;
     }
 }
